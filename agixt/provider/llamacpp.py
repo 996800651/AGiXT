@@ -64,4 +64,5 @@ class LlamacppProvider:
         data = response["choices"][0]["text"]
         data = data.replace(prompt, "")
         data = data.lstrip("\n")
+        self.model.reset()
         return data
