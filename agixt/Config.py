@@ -10,11 +10,11 @@ logging.basicConfig(
 
 class Config:
     def get_providers(self):
-        providers = []
-        for provider in glob.glob("provider/*.py"):
-            if "__init__.py" not in provider:
-                providers.append(os.path.splitext(os.path.basename(provider))[0])
-        return providers
+        return [
+            os.path.splitext(os.path.basename(provider))[0]
+            for provider in glob.glob("provider/*.py")
+            if "__init__.py" not in provider
+        ]
 
     def get_agents(self):
         agents_dir = "agents"

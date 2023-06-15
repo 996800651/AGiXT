@@ -183,10 +183,10 @@ class AGiXT:
                 self.failures == 0
                 logging.info("Failed to get a response 5 times in a row.")
                 return None
-            logging.info(f"Retrying in 10 seconds...")
+            logging.info("Retrying in 10 seconds...")
             time.sleep(10)
             if context_results > 0:
-                context_results = context_results - 1
+                context_results -= 1
             self.response = await self.run(
                 task=task,
                 prompt=prompt,
@@ -221,7 +221,7 @@ class AGiXT:
                 return_response = self.response
             self.response = return_response
         logging.info(f"Response: {self.response}")
-        if self.response != "" and self.response != None:
+        if self.response not in ["", None]:
             try:
                 await memories.store_result(task_name=task, result=self.response)
             except:
@@ -238,13 +238,11 @@ class AGiXT:
         objective: str = None,
         **kwargs,
     ):
-        answers = []
-        # Do multi shots of prompt to get N different answers to be validated
-        answers.append(
+        answers = [
             await self.run(
                 task=task,
                 prompt="SmartInstruct-StepByStep"
-                if objective == None
+                if objective is None
                 else "SmartTask-StepByStep",
                 context_results=6,
                 websearch=True,
@@ -252,26 +250,26 @@ class AGiXT:
                 shots=shots,
                 learn_file=learn_file,
                 objective=objective,
-                **kwargs,
+                **kwargs
             )
-        )
+        ]
         if shots > 1:
-            for i in range(shots - 1):
+            for _ in range(shots - 1):
                 answers.append(
                     await self.run(
                         task=task,
                         prompt="SmartInstruct-StepByStep"
-                        if objective == None
+                        if objective is None
                         else "SmartTask-StepByStep",
                         context_results=6,
                         shots=shots,
                         objective=objective,
-                        **kwargs,
+                        **kwargs
                     )
                 )
-        answer_str = ""
-        for i, answer in enumerate(answers):
-            answer_str += f"Answer {i + 1}:\n{answer}\n\n"
+        answer_str = "".join(
+            f"Answer {i + 1}:\n{answer}\n\n" for i, answer in enumerate(answers)
+        )
         researcher = await self.run(
             task=answer_str,
             prompt="SmartInstruct-Researcher",
@@ -289,8 +287,7 @@ class AGiXT:
             prompt="instruct",
             **kwargs,
         )
-        response = f"{resolver}\n\n{execution_response}"
-        return response
+        return f"{resolver}\n\n{execution_response}"
 
     async def smart_chat(
         self,
@@ -299,8 +296,7 @@ class AGiXT:
         learn_file: str = "",
         **kwargs,
     ):
-        answers = []
-        answers.append(
+        answers = [
             await self.run(
                 task=task,
                 prompt="SmartChat-StepByStep",
@@ -311,10 +307,10 @@ class AGiXT:
                 learn_file=learn_file,
                 **kwargs,
             )
-        )
+        ]
         # Do multi shots of prompt to get N different answers to be validated
         if shots > 1:
-            for i in range(shots - 1):
+            for _ in range(shots - 1):
                 answers.append(
                     await self.run(
                         task=task,
@@ -324,9 +320,9 @@ class AGiXT:
                         **kwargs,
                     )
                 )
-        answer_str = ""
-        for i, answer in enumerate(answers):
-            answer_str += f"Answer {i + 1}:\n{answer}\n\n"
+        answer_str = "".join(
+            f"Answer {i + 1}:\n{answer}\n\n" for i, answer in enumerate(answers)
+        )
         researcher = await self.run(
             task=answer_str,
             prompt="SmartChat-Researcher",
@@ -334,14 +330,13 @@ class AGiXT:
             shots=shots,
             **kwargs,
         )
-        resolver = await self.run(
+        return await self.run(
             task=researcher,
             prompt="SmartChat-Resolver",
             context_results=6,
             shots=shots,
             **kwargs,
         )
-        return resolver
 
     # Worker Sub-Agents
     async def validation_agent(
@@ -354,16 +349,12 @@ class AGiXT:
                 return {}
             if isinstance(cleaned_json, list):
                 cleaned_json = cleaned_json[0]
-            response = json.loads(cleaned_json)
-            return response
+            return json.loads(cleaned_json)
         except:
             logging.info("INVALID JSON RESPONSE")
             logging.info(execution_response)
             logging.info("... Trying again.")
-            if context_results != 0:
-                context_results = context_results - 1
-            else:
-                context_results = 0
+            context_results = context_results - 1 if context_results != 0 else 0
             execution_response = await self.run(
                 task=task, context_results=context_results, **kwargs
             )
@@ -383,46 +374,45 @@ class AGiXT:
             context_results=context_results,
             **kwargs,
         )
-        if "commands" in validated_response:
-            for command_name, command_args in validated_response["commands"].items():
-                # Search for the command in the available_commands list, and if found, use the command's name attribute for execution
-                if command_name is not None:
-                    for available_command in self.agent.available_commands:
-                        if command_name == available_command["friendly_name"]:
-                            # Check if the command is a valid command in the self.avent.available_commands list
-                            try:
-                                command_output = await self.agent.execute(
-                                    command_name=command_name, command_args=command_args
-                                )
-                            except Exception as e:
-                                logging.info("Command validation failed, retrying...")
-                                validate_command = await self.run(
-                                    task=task,
-                                    prompt="ValidationFailed",
-                                    command_name=command_name,
-                                    command_args=command_args,
-                                    command_output=e,
-                                    context_results=context_results,
-                                    **kwargs,
-                                )
-                                return await self.execution_agent(
-                                    execution_response=validate_command,
-                                    task=task,
-                                    context_results=context_results,
-                                    **kwargs,
-                                )
-                            logging.info(
-                                f"Command {command_name} executed successfully with args {command_args}. Command Output: {command_output}"
-                            )
-                            response = f"\nExecuted Command:{command_name} with args {command_args}.\nCommand Output: {command_output}\n"
-                            return response
-                else:
-                    if command_name == "None.":
-                        return "\nNo commands were executed.\n"
-                    else:
-                        return f"\Command not recognized: `{command_name}`."
-        else:
+        if "commands" not in validated_response:
             return "\nNo commands were executed.\n"
+        for command_name, command_args in validated_response["commands"].items():
+                # Search for the command in the available_commands list, and if found, use the command's name attribute for execution
+            if command_name is not None:
+                for available_command in self.agent.available_commands:
+                    if command_name == available_command["friendly_name"]:
+                        # Check if the command is a valid command in the self.avent.available_commands list
+                        try:
+                            command_output = await self.agent.execute(
+                                command_name=command_name, command_args=command_args
+                            )
+                        except Exception as e:
+                            logging.info("Command validation failed, retrying...")
+                            validate_command = await self.run(
+                                task=task,
+                                prompt="ValidationFailed",
+                                command_name=command_name,
+                                command_args=command_args,
+                                command_output=e,
+                                context_results=context_results,
+                                **kwargs,
+                            )
+                            return await self.execution_agent(
+                                execution_response=validate_command,
+                                task=task,
+                                context_results=context_results,
+                                **kwargs,
+                            )
+                        logging.info(
+                            f"Command {command_name} executed successfully with args {command_args}. Command Output: {command_output}"
+                        )
+                        return f"\nExecuted Command:{command_name} with args {command_args}.\nCommand Output: {command_output}\n"
+            else:
+                return (
+                    "\nNo commands were executed.\n"
+                    if command_name == "None."
+                    else f"\Command not recognized: `{command_name}`."
+                )
 
     async def websearch_agent(
         self, task: str = "What are the latest breakthroughs in AI?", depth: int = 3

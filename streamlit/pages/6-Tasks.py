@@ -40,11 +40,10 @@ if agent_name:
                     st.experimental_rerun()
                 else:
                     columns[0].error("Agent name and task objective are required.")
-        else:
-            if st.button("Stop Task", key=f"stop_{agent_name}"):
-                # This actually toggles to stop it if you try to run while it is running.
-                task = ApiClient.start_task_agent(agent_name=agent_name, objective="")
-                st.experimental_rerun()
+        elif st.button("Stop Task", key=f"stop_{agent_name}"):
+            # This actually toggles to stop it if you try to run while it is running.
+            task = ApiClient.start_task_agent(agent_name=agent_name, objective="")
+            st.experimental_rerun()
 
     with col2:
         st.markdown(f"**Status:** {agent_status}")
