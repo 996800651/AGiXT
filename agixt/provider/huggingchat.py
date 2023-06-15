@@ -13,7 +13,7 @@ class HuggingchatProvider:
     ):
         self.requirements = []
         self.AI_TEMPERATURE = AI_TEMPERATURE
-        self.MAX_TOKENS = int(MAX_TOKENS)
+        self.MAX_TOKENS = MAX_TOKENS
         self.AI_MODEL = AI_MODEL
         self.HUGGINGCHAT_COOKIE_PATH = HUGGINGCHAT_COOKIE_PATH
 
@@ -21,11 +21,10 @@ class HuggingchatProvider:
         try:
             chatbot = hugchat.ChatBot(cookie_path=self.HUGGINGCHAT_COOKIE_PATH)
             id = chatbot.new_conversation()
-            response = chatbot.chat(
+            return chatbot.chat(
                 text=prompt,
                 temperature=float(self.AI_TEMPERATURE),
             )
-            return response
         except Exception as e:
             logging.info(e)
             return f"HuggingChat Provider Failure: {e}."

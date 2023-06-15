@@ -59,9 +59,7 @@ if agent_name:
         chat_history=st.session_state["chat_history"][agent_name],
     )
     instruct_prompt = text_input("Enter your message", key="instruct_prompt")
-    send_button = button("Send Message")
-
-    if send_button:
+    if send_button := button("Send Message"):
         if agent_name and instruct_prompt:
             with spinner("Thinking, please wait..."):
                 if smart_instruct_toggle:

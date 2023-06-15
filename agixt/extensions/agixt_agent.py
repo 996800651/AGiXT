@@ -40,7 +40,7 @@ class agixt_agent(Extensions):
     async def create_command(
         self, function_description: str, agent: str = "AGiXT"
     ) -> List[str]:
-        with open(f"prompts/Create New Command.txt", "r") as f:
+        with open("prompts/Create New Command.txt", "r") as f:
             prompt = f.read()
         prompt = prompt.replace("{{NEW_FUNCTION_DESCRIPTION}}", function_description)
         response = await AGiXT(agent).run(prompt)
@@ -116,13 +116,11 @@ class agixt_agent(Extensions):
         return "Chain started successfully."
 
     async def ask(self, prompt: str, agent: str = "AGiXT") -> str:
-        response = await AGiXT(agent).run(
+        return await AGiXT(agent).run(
             prompt, prompt="chat", websearch=True, websearch_depth=4
         )
-        return response
 
     async def instruct(self, prompt: str, agent: str = "AGiXT") -> str:
-        response = await AGiXT(agent).run(
+        return await AGiXT(agent).run(
             task=prompt, prompt="instruct", websearch=True, websearch_depth=8
         )
-        return response

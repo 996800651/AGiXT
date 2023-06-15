@@ -39,10 +39,7 @@ if agent_name:
         st.session_state["chat_history"][agent_name] = []
 
     with st.container():
-        st.write(
-            f'<div style="width: 80%;">',
-            unsafe_allow_html=True,
-        )
+        st.write('<div style="width: 80%;">', unsafe_allow_html=True)
         render_chat_history(
             chat_container=chat_container,
             chat_history=st.session_state["chat_history"][agent_name],
@@ -50,9 +47,7 @@ if agent_name:
 
     st.write("---")
     chat_prompt = st.text_input("Enter your message", key="chat_prompt")
-    send_button = st.button("Send Message")
-
-    if send_button:
+    if send_button := st.button("Send Message"):
         if agent_name and chat_prompt:
             with st.spinner("Thinking, please wait..."):
                 if smart_chat_toggle:
@@ -69,10 +64,7 @@ if agent_name:
             ]
             st.session_state["chat_history"][agent_name].extend(chat_entry)
             with st.container():
-                st.write(
-                    f'<div style="width: 80%;">',
-                    unsafe_allow_html=True,
-                )
+                st.write('<div style="width: 80%;">', unsafe_allow_html=True)
                 render_chat_history(
                     chat_container=chat_container,
                     chat_history=st.session_state["chat_history"][agent_name],

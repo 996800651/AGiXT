@@ -37,10 +37,7 @@ class Tasks:
             logging.info(f"An error occurred while loading the task: {e}")
 
     def get_status(self):
-        if self.task_list != deque([]) and self.output_list != []:
-            return True
-        else:
-            return False
+        return self.task_list != deque([]) and self.output_list != []
 
     def update_task(self, task_id, task_name, task_output):
         # Check if the task exists at agents/{agent_name}/tasks/{self.primary_objective}.json
@@ -159,7 +156,7 @@ class Tasks:
                 self.stop_tasks()
                 continue
             logging.info(f"\nExecuting task {task['task_id']}: {task['task_name']}\n")
-            if smart != True:
+            if not smart:
                 result = await self.instruction_agent(task=task["task_name"], **kwargs)
             else:
                 result = await self.ai.smart_instruct(
@@ -174,8 +171,7 @@ class Tasks:
                 lines = result.split("\n") if "\n" in result else [result]
                 new_tasks = []
                 for line in lines:
-                    match = re.match(r"(\d+)\.\s+(.*)", line)
-                    if match:
+                    if match := re.match(r"(\d+)\.\s+(.*)", line):
                         task_id, task_name = match.groups()
                         new_tasks.append(
                             {"task_id": int(task_id), "task_name": task_name.strip()}

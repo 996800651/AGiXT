@@ -134,9 +134,7 @@ if selected_chain_name:
                     [
                         f"{arg}: {st.text_input(arg, value=prompt.get(arg, ''), key=f'{arg}_{step_number}')} "
                         for arg in command_args
-                        if arg != "context"
-                        and arg != "command_list"
-                        and arg != "COMMANDS"
+                        if arg not in ["context", "command_list", "COMMANDS"]
                     ]
                 )
                 modify_prompt = f"{command_name}({formatted_command_args})"
@@ -159,11 +157,7 @@ if selected_chain_name:
                     try:
                         modify_prompt["prompt_name"] = modify_prompt_name
                         for arg in prompt_args:
-                            if (
-                                arg != "context"
-                                and arg != "command_list"
-                                and arg != "COMMANDS"
-                            ):
+                            if arg not in ["context", "command_list", "COMMANDS"]:
                                 modify_prompt[arg] = st.text_input(
                                     arg,
                                     value=prompt.get(arg, "") if arg in prompt else "",
@@ -179,12 +173,12 @@ if selected_chain_name:
             if modify_prompt_type == "Command":
                 modify_prompt["command_name"] = command_name
                 for arg in command_args:
-                    if arg != "context" and arg != "command_list" and arg != "COMMANDS":
+                    if arg not in ["context", "command_list", "COMMANDS"]:
                         modify_prompt[arg] = st.session_state[f"{arg}_{step_number}"]
             elif modify_prompt_type == "Prompt":
                 modify_prompt["prompt_name"] = modify_prompt_name
                 for arg in prompt_args:
-                    if arg != "context" and arg != "command_list" and arg != "COMMANDS":
+                    if arg not in ["context", "command_list", "COMMANDS"]:
                         modify_prompt[arg] = st.session_state[f"{arg}_{step_number}"]
 
             ApiClient.update_step(

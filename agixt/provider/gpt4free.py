@@ -59,9 +59,7 @@ class Gpt4freeProvider:
                                     module_name = "usesless"
                                 else:
                                     module_name = provider.lower()
-                                module = importlib.import_module(
-                                    "gpt4free.%s" % module_name
-                                )
+                                module = importlib.import_module(f"gpt4free.{module_name}")
                                 if module and hasattr(module, "Account"):
                                     logging.info(f"Create account for: {provider}")
                                     self.account_tokens[provider] = self.create_account(
@@ -73,12 +71,12 @@ class Gpt4freeProvider:
                         if provider in self.account_tokens:
                             if provider == "ForeFront":
                                 args["account_data"] = self.account_tokens[provider]
-                            elif provider == "UseLess":
-                                args["token"] = self.account_tokens[provider]
                             elif provider == "Poe":
                                 args["token"] = self.account_tokens[provider]
                                 args["model"] = "GPT-4"
 
+                            elif provider == "UseLess":
+                                args["token"] = self.account_tokens[provider]
                         response = gpt4free.Completion.create(
                             getattr(gpt4free.Provider, provider), prompt=prompt, **args
                         )

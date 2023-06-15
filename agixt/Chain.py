@@ -13,10 +13,11 @@ class Chain:
         return chain_data
 
     def get_chains(self):
-        chains = [
-            f.replace(".json", "") for f in os.listdir("chains") if f.endswith(".json")
+        return [
+            f.replace(".json", "")
+            for f in os.listdir("chains")
+            if f.endswith(".json")
         ]
-        return chains
 
     def add_chain(self, chain_name):
         chain_data = {"chain_name": chain_name, "steps": []}
@@ -70,10 +71,10 @@ class Chain:
 
     def get_step(self, chain_name, step_number):
         chain_data = self.get_chain(chain_name=chain_name)
-        for step in chain_data["steps"]:
-            if step["step"] == step_number:
-                return step
-        return None
+        return next(
+            (step for step in chain_data["steps"] if step["step"] == step_number),
+            None,
+        )
 
     def get_steps(self, chain_name):
         chain_data = self.get_chain(chain_name=chain_name)
@@ -84,21 +85,20 @@ class Chain:
         if not 1 <= new_step_number <= len(
             chain_data["steps"]
         ) or current_step_number not in [step["step"] for step in chain_data["steps"]]:
-            print(f"Error: Invalid step numbers.")
+            print("Error: Invalid step numbers.")
             return
         moved_step = None
         for step in chain_data["steps"]:
             if step["step"] == current_step_number:
                 moved_step = step
-                chain_data["steps"].remove(step)
+                chain_data["steps"].remove(moved_step)
                 break
         for step in chain_data["steps"]:
             if new_step_number < current_step_number:
                 if new_step_number <= step["step"] < current_step_number:
                     step["step"] += 1
-            else:
-                if current_step_number < step["step"] <= new_step_number:
-                    step["step"] -= 1
+            elif current_step_number < step["step"] <= new_step_number:
+                step["step"] -= 1
         moved_step["step"] = new_step_number
         chain_data["steps"].append(moved_step)
         chain_data["steps"] = sorted(chain_data["steps"], key=lambda x: x["step"])
@@ -129,10 +129,7 @@ class Chain:
             with open(os.path.join("chains", f"{chain_name}_responses.json"), "r") as f:
                 responses = json.load(f)
             print(responses)
-            if step_number == "all":
-                return responses
-            else:
-                return responses.get(str(step_number))
+            return responses if step_number == "all" else responses.get(str(step_number))
         except:
             return ""
 
@@ -187,7 +184,9 @@ class Chain:
                 args = self.get_step_content(
                     chain_name=chain_name, prompt_content=step["prompt"]
                 )
-                if prompt_type == "Command":
+                if prompt_type == "Chain":
+                    result = await self.run_chain(step["prompt"]["chain_name"])
+                elif prompt_type == "Command":
                     return await Extensions(
                         agent_config=agent.agent.agent_config
                     ).execute_command(
@@ -200,18 +199,13 @@ class Chain:
                         step_number=step_number,
                         **args,
                     )
-                elif prompt_type == "Chain":
-                    result = await self.run_chain(step["prompt"]["chain_name"])
-                elif prompt_type == "Smart Instruct":
-                    result = await agent.smart_instruct(**args)
                 elif prompt_type == "Smart Chat":
                     result = await agent.smart_chat(**args)
+                elif prompt_type == "Smart Instruct":
+                    result = await agent.smart_instruct(**args)
                 elif prompt_type == "Task":
                     result = await agent.run_task(**args)
-        if result:
-            return result
-        else:
-            return None
+        return result if result else None
 
 
 if __name__ == "__main__":

@@ -46,11 +46,7 @@ class file_system(Extensions):
             result = subprocess.run(
                 f"python {file_path}", capture_output=True, encoding="utf8", shell=True
             )
-            if result.returncode == 0:
-                return result.stdout
-            else:
-                return f"Error: {result.stderr}"
-
+            return result.stdout if result.returncode == 0 else f"Error: {result.stderr}"
         try:
             client = docker.from_env()
 

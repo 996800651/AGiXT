@@ -285,7 +285,7 @@ async def prompt_agent(agent_name: str, agent_prompt: AgentPrompt):
 @app.post("/api/agent/{agent_name}/smartinstruct/{shots}", tags=["Agent"])
 async def smartinstruct(agent_name: str, shots: int, prompt: Prompt):
     agent = AGiXT(agent_name=agent_name)
-    response = await agent.smart_instruct(task=prompt.prompt, shots=int(shots))
+    response = await agent.smart_instruct(task=prompt.prompt, shots=shots)
     return {"response": str(response)}
 
 
@@ -373,7 +373,7 @@ async def get_task_output(agent_name: str) -> TaskOutput:
         task_output = Tasks(agent_name=agent_name).get_task_output()
     except:
         task_output = False
-    if task_output != False:
+    if task_output:
         return TaskOutput(
             output=task_output,
             message="Task agent is not running",
@@ -393,8 +393,7 @@ async def get_task_status(agent_name: str):
 
 @app.get("/api/chain", tags=["Chain"])
 async def get_chains():
-    chains = Chain().get_chains()
-    return chains
+    return Chain().get_chains()
 
 
 @app.get("/api/chain/{chain_name}", tags=["Chain"])

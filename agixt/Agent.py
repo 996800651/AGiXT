@@ -55,10 +55,7 @@ class Agent:
                 if "embedder" in self.PROVIDER_SETTINGS:
                     self.EMBEDDER = self.PROVIDER_SETTINGS["embedder"]
                 else:
-                    if self.AI_PROVIDER == "openai":
-                        self.EMBEDDER = "openai"
-                    else:
-                        self.EMBEDDER = "default"
+                    self.EMBEDDER = "openai" if self.AI_PROVIDER == "openai" else "default"
                 if "MAX_TOKENS" in self.PROVIDER_SETTINGS:
                     self.MAX_TOKENS = self.PROVIDER_SETTINGS["MAX_TOKENS"]
                 else:
@@ -95,10 +92,7 @@ class Agent:
         understand the user's intent and provide a more accurate response
         :return: The function `instruct` returns the `answer` variable.
         """
-        if not prompt:
-            return ""
-        answer = await self.PROVIDER.instruct(prompt, tokens)
-        return answer
+        return "" if not prompt else await self.PROVIDER.instruct(prompt, tokens)
 
     def _load_agent_config_keys(self, keys):
         """
@@ -169,10 +163,7 @@ class Agent:
         configuration file if it exists, otherwise it returns the string "openai".
         """
         config_file = self.get_agent_config()
-        if "provider" in config_file:
-            return config_file["provider"]
-        else:
-            return "openai"
+        return config_file["provider"] if "provider" in config_file else "openai"
 
     def create_agent_folder(self, agent_name):
         """
@@ -198,14 +189,11 @@ class Agent:
         function `func`. The keys of the dictionary are the parameter names, and the values are either
         `None` if the parameter has no default value, or the default value of the parameter if it has one.
         """
-        params = {}
         sig = signature(func)
-        for name, param in sig.parameters.items():
-            if param.default == Parameter.empty:
-                params[name] = None
-            else:
-                params[name] = param.default
-        return params
+        return {
+            name: None if param.default == Parameter.empty else param.default
+            for name, param in sig.parameters.items()
+        }
 
     def load_commands(self):
         """
@@ -276,19 +264,20 @@ class Agent:
         """
         try:
             with open(
-                os.path.join("agents", agent_name, "config.json")
-            ) as agent_config:
+                        os.path.join("agents", agent_name, "config.json")
+                    ) as agent_config:
                 try:
-                    agent_config_data = json.load(agent_config)
-                    return agent_config_data
+                    return json.load(agent_config)
                 except json.JSONDecodeError:
-                    agent_config_data = {}
-                    # Populate the agent_config with all commands enabled
-                    agent_config_data["commands"] = {
-                        command_name: "false"
-                        for command_name, _, _ in self.load_commands(agent_name)
+                    agent_config_data = {
+                        "commands": {
+                            command_name: "false"
+                            for command_name, _, _ in self.load_commands(
+                                agent_name
+                            )
+                        },
+                        "settings": DEFAULT_SETTINGS,
                     }
-                    agent_config_data["settings"] = DEFAULT_SETTINGS
                     # Save the updated agent_config to the file
                     with open(
                         os.path.join("agents", agent_name, "config.json"), "w"
@@ -390,8 +379,7 @@ class Agent:
             if os.path.exists(agent_file):
                 try:
                     with open(agent_file, "r") as f:
-                        file_content = f.read().strip()
-                        if file_content:
+                        if file_content := f.read().strip():
                             return json.loads(file_content)
                 except:
                     None
@@ -451,12 +439,10 @@ class Agent:
         try:
             with open(f"agents/{agent_name}/history.yaml", "r") as f:
                 yaml_history = yaml.safe_load(f)
-            chat_history = []
-            for interaction in yaml_history["interactions"]:
-                role = interaction["role"]
-                message = interaction["message"]
-                chat_history.append({role: message})
-            return chat_history
+            return [
+                {interaction["role"]: interaction["message"]}
+                for interaction in yaml_history["interactions"]
+            ]
         except:
             return []
 
